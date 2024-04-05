@@ -13,7 +13,6 @@ import Users from "./pages/Users";
 import FlatsFavorites from "./pages/FlatsFavorites";
 import Flat from "./pages/Flat";
 import FlatEdit from "./pages/FlatEdit";
-import Favourites from "./pages/Favourites";
 
 function App() {
   return (

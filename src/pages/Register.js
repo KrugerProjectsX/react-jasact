@@ -14,7 +14,7 @@ export default function Register() {
             <Typography variant="h4" gutterBottom>
                 Register
             </Typography>
-            <UserForm type={'create'} id={null}/>
+            <UserForm type={'create'} id={null} showButtons={true}/>
         </Box>
     );
 }

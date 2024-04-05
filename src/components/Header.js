@@ -29,7 +29,9 @@ export default function Header() {
             <AppBar position="static">
                 <Toolbar className={'bg-white'}>
                     <div className={'flex items-center m-4'}>
-                        <img src={jasactImage} alt="JASACT" className="pointer-events-none my-auto w-24 lg:w-40 md:w-32" />
+                        <Link to="/dashboard">
+                            <img src={jasactImage} alt="JASACT" className="pointer-events-none my-auto w-24 lg:w-40 md:w-32" />
+                        </Link>
                     </div>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                     </Typography>
@@ -46,8 +48,8 @@ export default function Header() {
                         }
                         {user && (user.role === 'landlord' || user.role === 'admin') && 
                             <Link to="/flats/new" className={'text-secondary'}>
-                            <Button>New flat</Button>
-                        </Link>
+                                <Button>New flat</Button>
+                             </Link>
                             
                         }
                         <Link to="/my-favorites-flats" className={'text-secondary'}>

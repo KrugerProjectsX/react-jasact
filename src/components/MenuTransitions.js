@@ -1,23 +1,22 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
-import {Dropdown} from '@mui/base/Dropdown';
-import {Menu} from '@mui/base/Menu';
-import {MenuButton as BaseMenuButton} from '@mui/base/MenuButton';
-import {MenuItem as BaseMenuItem, menuItemClasses} from '@mui/base/MenuItem';
-import {styled} from '@mui/system';
-import {CssTransition} from '@mui/base/Transitions';
-import {PopupContext} from '@mui/base/Unstable_Popup';
-import {useNavigate} from "react-router-dom";
-import {db} from "../firebase";
-import {useEffect, useState} from "react";
-import {doc, getDoc} from "firebase/firestore";
+import { Dropdown } from '@mui/base/Dropdown';
+import { Menu } from '@mui/base/Menu';
+import { MenuButton as BaseMenuButton } from '@mui/base/MenuButton';
+import { MenuItem as BaseMenuItem, menuItemClasses } from '@mui/base/MenuItem';
+import { styled } from '@mui/system';
+import { CssTransition } from '@mui/base/Transitions';
+import { PopupContext } from '@mui/base/Unstable_Popup';
+import { useNavigate } from "react-router-dom";
+import { db } from "../firebase";
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import jasactImage from "../assets/jasact.png"; // Importa la imagen
+import jasactImage from "../assets/jasact.png"; 
 
-export default function MenuTransitions({user, setUser}) {
-
+export default function MenuTransitions({ user, setUser }) {
     const navigate = useNavigate()
 
     const logout = () => {
@@ -25,45 +24,67 @@ export default function MenuTransitions({user, setUser}) {
         localStorage.removeItem('user_logged');
         setUser('');
         // Redirect to the login page
-        navigate('/', {replace: true});
+        navigate('/', { replace: true });
     };
 
-    
     const createHandleMenuClick = (menuItem) => {
-      return () => {
-          if (menuItem === 'Profile') {
-              navigate('/Profile', { replace: true });
-          } else if (menuItem === 'Log out') {
-              logout();
-          }
-      };
-  };
-  
+        return () => {
+            if (menuItem === 'Profile') {
+                navigate('/Profile', { replace: true });
+            } else if (menuItem === 'Log out') {
+                logout();
+            }
+        };
+    };
+
+    // Función para obtener la inicial del nombre
+    const getFirstNameInitial = (firstName) => {
+        return firstName.charAt(0).toUpperCase();
+    };
 
     return (
         <Dropdown>
             <MenuButton>
                 <div id="dropdownAvatarNameButton" data-dropdown-toggle="dropdownAvatarName"
-                     className="flex items-center text-sm pe-1 font-medium rounded-full md:me-0 text-gray-900">
-                    <img src={jasactImage} className="ml-1 w-8 h-8 me-2 rounded-full" alt="user photo"/> <span
-                    id="nameUserLog"></span>
-                    {user &&(<span>{user.firstName} {user.lastName}</span>)}
+                    className="flex items-center text-sm pe-1 font-medium rounded-full md:me-0 text-gray-900">
+                    {/* Agrega la imagen de perfil */}
+                    {user && (
+                        <Circle>{getFirstNameInitial(user.firstName)}</Circle>
+                    )}
+                    <span id="nameUserLog"></span>
+                    {user && (<span>{user.firstName} {user.lastName}</span>)}
+                    {/* Agrega el círculo con la inicial del nombre */}
+                    
                     <svg className="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                         viewBox="0 0 10 6">
+                        viewBox="0 0 10 6">
                         <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                              d="m1 1 4 4 4-4"/>
+                            d="m1 1 4 4 4-4" />
                     </svg>
                 </div>
 
             </MenuButton>
-            <Menu slots={{listbox: AnimatedListbox}}>
-                <MenuItem onClick={createHandleMenuClick('Profile')}><ManageAccountsIcon/> My Profile</MenuItem>
-                <MenuItem onClick={createHandleMenuClick('Account')}><SettingsIcon/> Account Settings</MenuItem>
-                <MenuItem onClick={createHandleMenuClick('Log out')}><ExitToAppIcon/> Log out</MenuItem>
+            <Menu slots={{ listbox: AnimatedListbox }}>
+                <MenuItem onClick={createHandleMenuClick('Profile')}><ManageAccountsIcon /> My Profile</MenuItem>
+                <MenuItem onClick={createHandleMenuClick('Account')}><SettingsIcon /> Account Settings</MenuItem>
+                <MenuItem onClick={createHandleMenuClick('Log out')}><ExitToAppIcon /> Log out</MenuItem>
             </Menu>
         </Dropdown>
     );
 }
+
+// Estilos para el círculo con la inicial del nombre
+const Circle = styled('div')`
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: blue; /* Color de fondo del círculo */
+    color: white; /* Color del texto (la inicial del nombre) */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 10px; /* Margen derecho para separar del nombre del usuario */
+`;
+
 
 const blue = {
     50: '#F0F7FF',
