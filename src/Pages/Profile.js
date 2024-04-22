@@ -1,10 +1,20 @@
-import UserForm from "../Components/UserForm";
+import * as React from 'react';
+import { Link, useParams } from "react-router-dom";
+import Header from "../components/Header";
+import "./Profile.css";
+import UserFormProfile from "../components/UserFormProfile";
 
-export default function Profile(){
-    return(
+export default function Profile() {
+    let { userId } = useParams();
+    
+    return (
         <div>
-            <h1>Profile</h1>
-            <UserForm type={'view'}/>
+            <Header />
+            <div className="profile-container">
+                <h1 className="title">Profile</h1>
+                <UserFormProfile type={'view'} id={userId}/>
+                <Link to={`/profile/edit/:userId${userId}`} className="edit-profile-link">Edit Profile</Link>
+            </div>
         </div>
-        )
-    }
+    );
+}
