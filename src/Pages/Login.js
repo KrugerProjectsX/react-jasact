@@ -1,24 +1,26 @@
+// Login.js
+import { useState, useRef, useEffect } from "react";
 import { Box, Button, Link, Snackbar, TextField, Typography } from "@mui/material";
-import { useRef, useState } from "react";
-import { db } from "../firebase";
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useNavigate } from "react-router-dom";
 import ApartmentImage from "../assets/apartment.jpg"; // Importa la imagen
+import { db } from "../firebase";
 
 export default function Login() {
-    const emailRef = useRef("");
-    const passwordRef = useRef("");
-    const usersRef = collection(db, 'users');
-    const navigate = useNavigate();
-    const [isProgress, setIsProgress] = useState(false);
-    const [errorAlert, setErrorAlert] = useState(null);
+    const emailRef = useRef(""); // Referencia al campo de correo
+    const passwordRef = useRef(""); // Referencia al campo de contraseña
+    const [isProgress, setIsProgress] = useState(false); // Estado para mostrar el progreso de inicio de sesión
+    const [errorAlert, setErrorAlert] = useState(null); // Estado para mostrar alertas de error
+    const usersRef = collection(db, 'users'); // Referencia a la colección de usuarios en Firestore
+    const navigate = useNavigate(); // Función de navegación
 
+    // Función para manejar el inicio de sesión
     const handleLogin = async (e) => {
         e.preventDefault();
         setIsProgress(true);
 
-        const emailValue = emailRef.current.value;
-        const passwordValue = passwordRef.current.value;
+        const emailValue = emailRef.current.value; // Obtener el valor del campo de correo
+        const passwordValue = passwordRef.current.value; // Obtener el valor del campo de contraseña
 
         try {
             const querySnapshot = await getDocs(query(usersRef, where("email", "==", emailValue)));
@@ -34,26 +36,39 @@ export default function Login() {
                     navigate('/dashboard', { replace: true });
                     return;
                 } else {
-                    setErrorAlert("Contraseña incorrecta");
+                    setErrorAlert("Incorrect password");
                 }
             } else {
-                setErrorAlert("Usuario no encontrado");
+                setErrorAlert("User not found");
             }
         } catch (error) {
-            console.error("Error al iniciar sesión:", error);
-            setErrorAlert("Ocurrió un error al iniciar sesión. Por favor, inténtelo de nuevo más tarde.");
+            console.error("Error logging in:", error);
+            setErrorAlert("An error occurred while logging in. Please try again later.");
         }
 
         setIsProgress(false);
-    }
+    };
 
+    // Función para manejar el cierre de la alerta de error
     const handleCloseAlert = () => {
         setErrorAlert(null);
     };
 
+    // Función para redirigir a la página de registro
     const handleRegisterRedirect = () => {
         navigate('/register', { replace: true });
     };
+
+    // Datos del usuario registrado
+    useEffect(() => {
+        // Obtener las credenciales del usuario registrado del almacenamiento local
+        const storedUser = JSON.parse(localStorage.getItem('registeredUser'));
+        if (storedUser) {
+            // Si hay credenciales almacenadas, completar automáticamente los campos del formulario
+            emailRef.current.value = storedUser.email;
+            passwordRef.current.value = storedUser.password;
+        }
+    }, []);
 
     return (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundImage: `url(${ApartmentImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
@@ -81,7 +96,7 @@ export default function Login() {
                     className="mb-2"
                 />
                 <TextField
-                    label="Contraseña"
+                    label="Password"
                     inputRef={passwordRef}
                     fullWidth
                     variant="outlined"
@@ -96,10 +111,10 @@ export default function Login() {
                     className="mb-2"
                     sx={{ backgroundColor: '#4CAF50', color: 'white' }}
                 >
-                    {isProgress ? 'Iniciando sesión...' : 'Iniciar sesión'}
+                    {isProgress ? 'Logging in...' : 'Login'}
                 </Button>
                 <Typography variant="body1" gutterBottom>
-                    ¿No tienes una cuenta? <Link component="button" variant="body1" onClick={handleRegisterRedirect} style={{ color: '#4CAF50' }}>Regístrate aquí</Link>
+                    Don't have an account? <Link component="button" variant="body1" onClick={handleRegisterRedirect} style={{ color: '#4CAF50' }}>Sign up here</Link>
                 </Typography>
             </Box>
             <Snackbar

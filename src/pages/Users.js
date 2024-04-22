@@ -6,7 +6,7 @@ export default function Users() {
     return (
         <div>
             <Header/>
-            <h1>Users</h1>
+            <h1 className="title">Users</h1>
             
             <UsersTable/>
         </div>

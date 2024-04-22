@@ -5,7 +5,7 @@ export default function MyFlats() {
     return (
         <div>
             <Header/>
-            <h1>My Flats</h1>
+            <h1 className="title">My Flats</h1>
             
             <FlatsTable type={'my-flats'} />
         </div>

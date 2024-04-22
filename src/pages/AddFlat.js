@@ -7,7 +7,7 @@ export default function AddFlat() {
         <>
             <Header/>
             <div>
-                <h1>Add Flat</h1>
+                <h1 className="title">Add Flat</h1>
             </div>
             <div>
                 <FlatForm type={'create'} id={null} />

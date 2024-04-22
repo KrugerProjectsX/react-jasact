@@ -5,38 +5,43 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import TablePagination from '@mui/material/TablePagination';
 import { useEffect, useState } from "react";
-import { getDocs, query, where, collection } from "firebase/firestore";
+import { getDocs, query, where, collection, orderBy, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../firebase";
-import {Box, Button, MenuItem, Select, Slider, TextField} from "@mui/material";
+import { Box, Button, Slider, TextField } from "@mui/material";
 import Typography from "@mui/material/Typography";
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export default function UsersTable() {
     const ref = collection(db, "users");
     const refFlats = collection(db, "flats");
-    const [userType,setUserType] = useState('');
-    const [flatsCounter,setFlatsCounter] = useState('');
+    const [userType, setUserType] = useState('');
+    const [flatsCounter, setFlatsCounter] = useState('');
     const [valueSlider, setValueSlider] = React.useState([18, 120]);
-
     const [users, setUsers] = useState([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(8);
 
     const getData = async () => {
-        
-      let arrayWhere= []
-        
-        if (userType){
+        let arrayWhere = []
+
+        if (userType) {
             arrayWhere.push(where("role", "==", userType));
         }
-        
+
         const today = new Date();
         const minBirthDate = new Date(today.getFullYear() - valueSlider[0], today.getMonth(), today.getDate()).toISOString().split('T')[0];
         const maxBirthDate = new Date(today.getFullYear() - valueSlider[1], today.getMonth(), today.getDate()).toISOString().split('T')[0];
-        if (valueSlider && valueSlider.length > 1){
-            arrayWhere.push(where("birthDate", ">=",maxBirthDate));
-            arrayWhere.push( where("birthDate", "<=",minBirthDate));
+        if (valueSlider && valueSlider.length > 1) {
+            arrayWhere.push(where("birthDate", ">=", maxBirthDate));
+            arrayWhere.push(where("birthDate", "<=", minBirthDate));
         }
-     
-        const searchUser = query(ref, ...arrayWhere);
+
+        const orderField = 'firstName'; // Campo por el que se va a ordenar
+
+        const searchUser = query(ref, ...arrayWhere, orderBy(orderField));
 
         const data = await getDocs(searchUser);
         const usersSet = []; // Conjunto para almacenar usuarios únicos
@@ -45,35 +50,66 @@ export default function UsersTable() {
         for (const item of data.docs) {
             const search = query(refFlats, where("user", "==", item.id));
             const dataFlats = await getDocs(search);
-            
-            if (flatsCounter){
+
+            if (flatsCounter) {
                 const flatsValue = flatsCounter.split('-');
-                if(flatsValue.length > 1){
+                if (flatsValue.length > 1) {
                     const min = flatsValue[0];
                     const max = flatsValue[1];
-                    if (dataFlats.docs?.length < min || dataFlats.docs?.length > max){
+                    if (dataFlats.docs?.length < min || dataFlats.docs?.length > max) {
                         continue;
                     }
-                }else{
-                    if(flatsValue[0] ==='61+'){
-                        if (dataFlats.docs?.length < 61){
+                } else {
+                    if (flatsValue[0] === '61+') {
+                        if (dataFlats.docs?.length < 61) {
                             continue;
                         }
                     }
                 }
-                
+
             }
-            const userWithFlats = {...item.data(), id: item.id, flats: dataFlats.docs?.length};
-            
+            const userWithFlats = { ...item.data(), id: item.id, flats: dataFlats.docs?.length };
+
             usersSet.push(userWithFlats);
         }
+
+        // Ordenar alfabéticamente sin importar mayúsculas o minúsculas
+        usersSet.sort((a, b) => a.firstName.localeCompare(b.firstName, undefined, { sensitivity: 'base' }));
 
         setUsers(usersSet);
     };
 
     useEffect(() => {
-        getData();
-    }, [userType,flatsCounter,valueSlider]);
+        const getDataAndCleanup = async () => {
+            await getData();
+        };
+    
+        getDataAndCleanup();
+    
+        return () => {
+            
+        };
+    }, [userType, flatsCounter, valueSlider, page, rowsPerPage]);
+
+    const handleDeleteUser = async (userId) => {
+        try {
+            await deleteDoc(doc(db, "users", userId));
+            console.log("User successfully deleted!");
+            // Actualizar los datos después de eliminar el usuario
+            getData();
+        } catch (error) {
+            console.error("Error deleting user: ", error);
+        }
+    };
+
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
 
     return (
         <>
@@ -86,7 +122,7 @@ export default function UsersTable() {
                         SelectProps={{ native: true }}
                         className="w-40"
                         value={userType}
-                        onChange={(e)=> setUserType(e.target.value)}
+                        onChange={(e) => setUserType(e.target.value)}
                     >
                         <option key="none" value=""></option>
                         <option key="landlord" value="landlord">Landlords</option>
@@ -101,7 +137,7 @@ export default function UsersTable() {
                         SelectProps={{ native: true }}
                         className="w-40"
                         value={flatsCounter}
-                        onChange={(e)=> setFlatsCounter(e.target.value)}
+                        onChange={(e) => setFlatsCounter(e.target.value)}
                     >
                         <option key="none" value=""></option>
                         <option key="0-5" value="0-5">0-5</option>
@@ -109,7 +145,7 @@ export default function UsersTable() {
                         <option key="21-60" value="21-60">21-60</option>
                         <option key="61+" value="61+">61+</option>
                     </TextField>
-                    
+
                 </div>
                 <div className={'w-full'}>
                     <Typography id="input-slider" gutterBottom>
@@ -120,13 +156,12 @@ export default function UsersTable() {
                         min={18}
                         step={10}
                         value={valueSlider}
-                        onChange={(e,newValue)=>setValueSlider(newValue)}
+                        onChange={(e, newValue) => setValueSlider(newValue)}
                         getAriaLabel={() => 'Age Range'}
                         valueLabelDisplay="auto"
                         className="flex-grow"
                     />
                 </div>
-                
             </Box>
 
             <TableContainer>
@@ -137,27 +172,47 @@ export default function UsersTable() {
                             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">Last Name</TableCell>
                             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">Email</TableCell>
                             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">Birth Date</TableCell>
-                            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">is Admin</TableCell>
+                            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">Role</TableCell>
                             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">Flats Count</TableCell>
-                            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right"></TableCell>
+                            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody className="bg-white divide-y divide-gray-200">
-                        {users.map((row) => (
+                        {(rowsPerPage > 0
+                            ? users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                            : users
+                        ).map((row) => (
                             <TableRow key={row.id}>
                                 <TableCell className="px-6 py-4 whitespace-nowrap">{row.firstName}</TableCell>
-                                <TableCell className="px-6 py-4 whitespace-nowrap" >{row.lastName}</TableCell>
-                                <TableCell className="px-6 py-4 whitespace-nowrap" >{row.email}</TableCell>
-                                <TableCell className="px-6 py-4 whitespace-nowrap" >{row.birthDate}</TableCell>
-                                <TableCell className="px-6 py-4 whitespace-nowrap" >{row.role ==='admin' ? 'Yes' : 'No'}</TableCell>
-                                <TableCell className="px-6 py-4 whitespace-nowrap" >{row.flats}</TableCell>
-                                <TableCell className="px-6 py-4 whitespace-nowrap" ><Button href={`/profile/edit/${row.id}`} >Edit</Button></TableCell>
+                                <TableCell className="px-6 py-4 whitespace-nowrap">{row.lastName}</TableCell>
+                                <TableCell className="px-6 py-4 whitespace-nowrap">{row.email}</TableCell>
+                                <TableCell className="px-6 py-4 whitespace-nowrap">{row.birthDate}</TableCell>
+                                <TableCell className="px-6 py-4 whitespace-nowrap">{row.role}</TableCell>
+                                <TableCell className="px-6 py-4 whitespace-nowrap">{row.flats}</TableCell>
+                                <TableCell className="px-6 py-4 whitespace-nowrap">
+                                    <Button startIcon={<EditIcon />} href={`/profile/edit/${row.id}`} variant="outlined" style={{ marginRight: '8px' }}>
+                                        Edit
+                                    </Button>
+                                    <Button startIcon={<DeleteIcon />} onClick={() => handleDeleteUser(row.id)} style={{ color: 'red' }} variant="outlined">
+                                        Delete
+                                    </Button>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </TableContainer>
+            <TablePagination
+                component="div"
+                count={users.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                labelRowsPerPage={null}
+                rowsPerPageOptions={[]} 
+            />
         </>
-        
+
     );
 }

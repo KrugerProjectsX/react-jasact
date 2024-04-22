@@ -8,7 +8,7 @@ export default function FlatsPage() {
     <div>
       <Header/>
       <div className="container">
-        <h1>EditFlats</h1>
+        <h1 h1 className="title">EditFlats</h1>
         <EditFlatForm/> {/* Renderiza el componente de edición de flats */}
       </div>
     </div>

@@ -21,6 +21,7 @@ function EditFlatForm() {
         streetNumber: '',
         yearBuilt: ''
     });
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -44,7 +45,7 @@ function EditFlatForm() {
     const handleSubmit = async () => {
         const flatRef = doc(db, "flats", id);
         await updateDoc(flatRef, flatData);
-        console.log("Document updated successfully!");
+        setSuccessMessage('Flat updated successfully!');
     };
 
     return (
@@ -53,7 +54,7 @@ function EditFlatForm() {
             spacing={2}
             justifyContent="center"
             alignItems="center"
-            style={{ minHeight: '100vh' }}
+            marginLeft={6}
         >
             <Grid item xs={12} sm={8} md={6}>
                 <Paper elevation={3} style={{ padding: '20px' }}>
@@ -102,11 +103,14 @@ function EditFlatForm() {
                             shrink: true,
                         }}
                     />
-                    {/* Agrega los demás campos de manera similar */}
+                
 
-                    <Button variant="contained" onClick={handleSubmit}>
-                        Guardar
-                    </Button>
+                    <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                        <Button variant="contained" onClick={handleSubmit}>
+                            Edit
+                        </Button>
+                    </div>
+                    {successMessage && <p style={{ color: 'green', marginTop: '10px', textAlign: 'center' }}>{successMessage}</p>}
                 </Paper>
             </Grid>
         </Grid>

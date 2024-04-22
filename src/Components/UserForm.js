@@ -4,15 +4,15 @@ import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { Link, useNavigate } from "react-router-dom";
 
-export default function UserForm({ type }) {
+export default function UserForm({ type}) {
     const currentDate = new Date().toJSON().slice(0, 10);
     const navigate = useNavigate();
 
     const [user, setUser] = useState({
         firstName: '',
         lastName: '',
-        email: '',
-        password: '',
+        email: '', 
+        password: '', 
         confirmPassword: '',
         birthDate: currentDate
     });
@@ -48,38 +48,39 @@ export default function UserForm({ type }) {
 
         const { firstName, lastName, email, password, confirmPassword, birthDate } = user;
 
-        // Validar campos requeridos
+        // Validate required fields
         if (!firstName || !lastName || !email || !password || !confirmPassword || !birthDate) {
             setAlertMessage('All fields are required');
             return;
         }
 
-        // Validar formato de email
+        // Validate email format
         const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
         if (!emailRegex.test(email)) {
             setAlertMessage('Invalid email format');
             return;
         }
 
-        // Validar longitud de nombres
+        // Validate name length
         if (firstName.length < 2 || lastName.length < 2) {
             setAlertMessage('First name and last name must be at least 2 characters long');
             return;
         }
 
-        // Validar coincidencia de contraseñas
+        // Validate password complexity
+        const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
+        if (!passwordRegex.test(password)) {
+            setAlertMessage('Password must be at least 6 characters long and contain at least one number and one special character');
+            return;
+        }
+
+        // Validate password match
         if (password !== confirmPassword) {
             setAlertMessage('Passwords do not match');
             return;
         }
 
-        // Validar longitud de contraseña
-        if (password.length < 6) {
-            setAlertMessage('Password must be at least 6 characters long');
-            return;
-        }
-
-        // Verificar si el correo electrónico ya existe
+        // Check if email already exists
         const emailExistsQuery = query(refCreate, where("email", "==", email));
         const emailExistsSnapshot = await getDocs(emailExistsQuery);
         if (!emailExistsSnapshot.empty) {
@@ -102,7 +103,9 @@ export default function UserForm({ type }) {
             setTimeout(() => {
                 setAlertMessage(null);
                 navigate('/');
-            }, 6000);
+                // Guardar las credenciales del usuario registrado en el almacenamiento local
+                localStorage.setItem('registeredUser', JSON.stringify(newUser));
+            }, 3000);
         } catch (error) {
             console.error('Error creating user:', error);
             setAlertMessage('An error occurred. Please try again later.');

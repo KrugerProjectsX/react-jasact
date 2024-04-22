@@ -1,3 +1,4 @@
+// FlatsTable.js
 import * as React from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -5,12 +6,12 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import TablePagination from '@mui/material/TablePagination'; // Importar TablePagination
+import TablePagination from '@mui/material/TablePagination';
 import { useEffect, useState } from "react";
 import { getDocs, query, where, collection, addDoc, doc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { Button, TextField } from "@mui/material";
-import { Delete, Edit, Visibility } from "@mui/icons-material"; // Importar los íconos
+import { Delete, Edit, Visibility, Favorite, FavoriteBorder } from "@mui/icons-material"; 
 
 export default function FlatsTable({ type }) {
     const ref = collection(db, "flats");
@@ -106,27 +107,26 @@ export default function FlatsTable({ type }) {
     const handleFilterAndSort = () => {
         const filtered = flats.filter(flat => {
             return (
-                flat.city && // Verificar si city está definido
+                flat.city && 
                 flat.city.toLowerCase().includes(filters.city.toLowerCase()) &&
-                (!filters.minAreaSize || (flat.areaSize && parseInt(flat.areaSize) >= parseInt(filters.minAreaSize))) && // Verificar si areaSize está definido
-                (!filters.maxAreaSize || (flat.areaSize && parseInt(flat.areaSize) <= parseInt(filters.maxAreaSize))) && // Verificar si areaSize está definido
-                (!filters.minRentPrice || (flat.rentPrice && parseInt(flat.rentPrice) >= parseInt(filters.minRentPrice))) && // Verificar si rentPrice está definido
-                (!filters.maxRentPrice || (flat.rentPrice && parseInt(flat.rentPrice) <= parseInt(filters.maxRentPrice))) // Verificar si rentPrice está definido
+                (!filters.minAreaSize || (flat.areaSize && parseInt(flat.areaSize) >= parseInt(filters.minAreaSize))) &&
+                (!filters.maxAreaSize || (flat.areaSize && parseInt(flat.areaSize) <= parseInt(filters.maxAreaSize))) &&
+                (!filters.minRentPrice || (flat.rentPrice && parseInt(flat.rentPrice) >= parseInt(filters.minRentPrice))) &&
+                (!filters.maxRentPrice || (flat.rentPrice && parseInt(flat.rentPrice) <= parseInt(filters.maxRentPrice)))
             );
-        }).sort((a, b) => (a.city > b.city) ? 1 : -1);
+        }).sort((a, b) => a.city.localeCompare(b.city, undefined, { sensitivity: 'base' }));
         setFilteredFlats(filtered);
     };
-
+    
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
 
     const handleChangeRowsPerPage = (event) => {
         const value = parseInt(event.target.value, 10);
-        if (!isNaN(value) && value > 0) { // Verificar si el valor es un número válido y mayor que cero
+        if (!isNaN(value) && value > 0) { 
             setRowsPerPage(value);
             setPage(0);
-            // Volver a calcular los datos filtrados para reflejar el nuevo número de filas por página
             const startIndex = page * value;
             const endIndex = Math.min((startIndex + value), filteredFlats.length);
             setFilteredFlats(flats.slice(startIndex, endIndex));
@@ -140,6 +140,30 @@ export default function FlatsTable({ type }) {
     useEffect(() => {
         handleFilterAndSort();
     }, [filters, flats]);
+
+    const getOwnerData = async (flat) => {
+        try {
+            const userRef = doc(db, 'users', flat.user);
+            const userDoc = await getDoc(userRef);
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                flat.ownerName = userData.firstName + ' ' + userData.lastName;
+                flat.ownerEmail = userData.email;
+            } else {
+                console.error('User document does not exist');
+            }
+        } catch (error) {
+            console.error('Error getting owner data:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (type === 'all-flats' || type === 'favorite-flats') {
+            filteredFlats.forEach(async (flat) => {
+                await getOwnerData(flat);
+            });
+        }
+    }, [filteredFlats]);
 
     return (
         <div style={{ textAlign: 'center' }}>
@@ -202,9 +226,10 @@ export default function FlatsTable({ type }) {
                             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">Rent price</TableCell>
                             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">Has AC</TableCell>
                             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">Date available</TableCell>
+                            {(type === 'all-flats' || type === 'favorite-flats') && <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">Owner Name</TableCell>}
+                            {(type === 'all-flats' || type === 'favorite-flats') && <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right">Owner Email</TableCell>}
                             {(type === 'all-flats' || type === 'favorite-flats') && <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right"></TableCell>}
                             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" align="right"></TableCell>
-
                         </TableRow>
                     </TableHead>
                     <TableBody className="bg-white divide-y divide-gray-200">
@@ -218,16 +243,21 @@ export default function FlatsTable({ type }) {
                                 <TableCell className="px-6 py-4 whitespace-nowrap">{row.rentPrice}</TableCell>
                                 <TableCell className="px-6 py-4 whitespace-nowrap">{row.hasAc ? 'Yes' : 'No'}</TableCell>
                                 <TableCell className="px-6 py-4 whitespace-nowrap">{row.dateAvailable}</TableCell>
+                                {(type === 'all-flats' || type === 'favorite-flats') && <TableCell className="px-6 py-4 whitespace-nowrap">{row.ownerName}</TableCell>}
+                                {(type === 'all-flats' || type === 'favorite-flats') && <TableCell className="px-6 py-4 whitespace-nowrap">{row.ownerEmail}</TableCell>}
                                 {(type === 'all-flats' || type === 'favorite-flats') && <TableCell className="px-6 py-4 whitespace-nowrap">
-                                    {!row.favorite && <Button onClick={() => addFavorite(row.id)}>Add Favorite</Button>}
-                                    {row.favorite && <Button onClick={() => removeFavorite(row.favorite)}>Remove Favorite</Button>}
+                                    {row.favorite ? (
+                                        <Button onClick={() => removeFavorite(row.favorite)} startIcon={<Favorite />} color="success">Remove Favorite</Button>
+                                    ) : (
+                                        <Button onClick={() => addFavorite(row.id)} startIcon={<FavoriteBorder />} color="primary">Add Favorite</Button>
+                                    )}
                                 </TableCell>}
                                 <TableCell className="px-6 py-4 whitespace-nowrap">
                                     <Button href={`/flat/${row.id}`} startIcon={<Visibility />}>View</Button>
                                     {type === 'my-flats' && (
                                         <>
                                             <Button href={`/flat/edit/${row.id}`} startIcon={<Edit />}>Edit</Button>
-                                            <Button onClick={() => handleDelete(row.id)} startIcon={<Delete style={{ color: 'red' }} />}>Delete</Button> {/* Cambiar el color a rojo */}
+                                            <Button onClick={() => handleDelete(row.id)} startIcon={<Delete style={{ color: 'red' }} />}>Delete</Button>
                                         </>
                                     )}
                                 </TableCell>
@@ -244,7 +274,7 @@ export default function FlatsTable({ type }) {
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 labelRowsPerPage={null}
-                rowsPerPageOptions={[]} // Establecer como un array vacío
+                rowsPerPageOptions={[]} 
             />
         </div>
     );

@@ -5,7 +5,7 @@ export default function Flats() {
     return (
         <div>
             <Header/>
-        <h1>Home</h1>
+        <h1 className="title">Home</h1>
             <FlatsTable type={'all-flats'} />
         </div>
     );

@@ -9,7 +9,7 @@ export default function Flat() {
     return (
         <div>
             <Header/>
-            <h1>View Flat</h1>
+            <h1 className="title">View Flat</h1>
             <FlatForm type={'view'} id={id}/>
             <Messages flatId={id}/>
             

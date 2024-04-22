@@ -1,7 +1,6 @@
-import UserForm from "../components/UserForm";
 import Header from "../components/Header";
 import {useParams} from "react-router-dom";
-import UserForm2 from "../components/UserForm2";
+import UserFormProfile from "../components/UserFormProfile";
 
 export default function ProfileUpdate() {
     let { userId }  = useParams();
@@ -14,8 +13,8 @@ export default function ProfileUpdate() {
     return (
         <div>
             <Header/>
-            <h1>Profile Update</h1>
-            <UserForm2 type={'update'} userId={userId}/>
+            <h1 className="title">Profile Update</h1>
+            <UserFormProfile type="update" userId={userId} editable={true} />
         </div>
     );
 }

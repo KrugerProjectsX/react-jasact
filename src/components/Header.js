@@ -40,7 +40,7 @@ export default function Header() {
                         <Link to="/dashboard" className={'text-secondary'}>
                             <Button>Home</Button>
                         </Link>
-                        {user && (user.role === 'landlord' || user.role === 'admin') && 
+                        {user && (user.role === 'landlord') && 
                             <Link to="/My-flats" className={'text-secondary'}>
                                 <Button>My Flats</Button>
                             </Link>
